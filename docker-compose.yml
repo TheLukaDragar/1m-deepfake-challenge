@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  pytorch_container:
+    build: 1mdfFinal
+    working_dir: /1mdfFinal
+    command: >
+      bash -c " while true; do
+        sleep 1000;
+      done "
+    ports:
+      - "8888:8888" # Example port mapping for Jupyter Notebook or other services
+
+    volumes:
+      - ./checkpoints:/1mdfFinal/visual/models_luka_1mdf
+      - ./dataset:/1mdfFinal/dataset/
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
