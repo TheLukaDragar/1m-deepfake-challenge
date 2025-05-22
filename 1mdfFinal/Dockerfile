@@ -4,28 +4,38 @@ FROM pytorch/pytorch:2.7.0-cuda12.6-cudnn9-devel
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Add FFmpeg 7.x PPA and install dependencies
+# Install basic build dependencies first
 RUN apt-get update && \
-    apt-get install -y software-properties-common && \
-    add-apt-repository ppa:ubuntuhandbook1/ffmpeg7 && \
-    apt-get update && \
     apt-get install -y \
     build-essential \
     cmake \
     git \
-    pkg-config \
     wget \
     python3-dev \
     python3-setuptools \
-    ffmpeg \
-    libavcodec-dev \
-    libavformat-dev \
-    libavutil-dev \
-    libavfilter-dev \
-    libavdevice-dev \
-    libswresample-dev \
-    libswscale-dev \
     && rm -rf /var/lib/apt/lists/*
+
+# Download and compile FFmpeg 7.1.1 from source
+RUN cd /tmp && \
+    wget https://ffmpeg.org/releases/ffmpeg-7.1.1.tar.xz && \
+    tar xf ffmpeg-7.1.1.tar.xz && \
+    cd ffmpeg-7.1.1 && \
+    ./configure \
+    --prefix=/usr \
+    --extra-version=0ubuntu0.1 \
+    --toolchain=hardened \
+    --libdir=/usr/lib/x86_64-linux-gnu \
+    --incdir=/usr/include/x86_64-linux-gnu \
+    --arch=amd64 \
+    --enable-gpl \
+    --disable-stripping \
+    --enable-shared \
+    --disable-static \
+    && \
+    make -j$(nproc) && \
+    make install && \
+    cd /tmp && \
+    rm -rf ffmpeg-7.1.1*
 
 # Download and install the latest static ffmpeg for runtime
 RUN cd /tmp && \
@@ -36,7 +46,10 @@ RUN cd /tmp && \
     rm -rf /tmp/ffmpeg-* && \
     chmod +x /usr/local/bin/ffmpeg /usr/local/bin/ffprobe
 
-# Verify FFmpeg version
+# Update library cache
+RUN ldconfig
+
+# Verify FFmpeg version and libraries
 RUN ffmpeg -version | head -n 1 && \
     pkg-config --modversion libavcodec libavformat libavutil
 
