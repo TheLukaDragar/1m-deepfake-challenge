@@ -19,6 +19,7 @@ RUN apt-get install -y \
     wget \
     python3-dev \
     python3-setuptools \
+    pkgconf \
     && rm -rf /var/lib/apt/lists/*
 
 # Create directory for FFmpeg packages
