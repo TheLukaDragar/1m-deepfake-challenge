@@ -48,9 +48,6 @@ RUN cd /tmp/ffmpeg_packages && \
     cd / && \
     rm -rf /tmp/ffmpeg_packages
 
-# Set PKG_CONFIG_PATH to include FFmpeg .pc files
-ENV PKG_CONFIG_PATH="/usr/lib/x86_64-linux-gnu/pkgconfig:/usr/local/lib/pkgconfig"
-
 # Update library cache
 RUN ldconfig
 
