@@ -4,7 +4,6 @@ FROM pytorch/pytorch:2.7.0-cuda12.6-cudnn9-devel
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
 
-
 # Update package lists
 RUN apt-get update
 
@@ -22,8 +21,11 @@ RUN apt-get install -y \
     python3-setuptools \
     && rm -rf /var/lib/apt/lists/*
 
+# Create directory for FFmpeg packages
+RUN mkdir -p /tmp/ffmpeg_packages
+
 # Download and install FFmpeg 7.1.1 prebuilt packages from Ubuntu 24.04
-RUN cd /tmp && \
+RUN cd /tmp/ffmpeg_packages && \
     # Download the main FFmpeg 7.1.1 library packages
     wget http://archive.ubuntu.com/ubuntu/pool/universe/f/ffmpeg/libavutil59_7.1.1-1ubuntu1_amd64.deb && \
     wget http://archive.ubuntu.com/ubuntu/pool/universe/f/ffmpeg/libavcodec61_7.1.1-1ubuntu1_amd64.deb && \
@@ -43,17 +45,17 @@ RUN cd /tmp && \
     # Install all packages
     dpkg -i *.deb || apt-get install -f -y && \
     # Clean up
-    rm -rf /tmp/*.deb
+    cd / && \
+    rm -rf /tmp/ffmpeg_packages
 
 # Set PKG_CONFIG_PATH to include FFmpeg .pc files
-ENV PKG_CONFIG_PATH="/usr/lib/x86_64-linux-gnu/pkgconfig:/usr/lib/pkgconfig"
+ENV PKG_CONFIG_PATH="/usr/lib/x86_64-linux-gnu/pkgconfig:/usr/local/lib/pkgconfig"
 
 # Update library cache
 RUN ldconfig
 
-# Show what FFmpeg version we're building against (should be 7.1)
-RUN pkg-config --modversion libavcodec libavformat libavutil | head -3
-
+# Verify FFmpeg installation and version
+RUN pkg-config --modversion libavcodec libavformat libavutil
 
 # Download and install the latest static ffmpeg
 RUN apt-get update && \
@@ -67,7 +69,7 @@ RUN apt-get update && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/*
 
-# (Optional) Verify ffmpeg version
+# Verify ffmpeg version
 RUN ffmpeg -version
 
 # Install uv and set up virtual environment
@@ -82,11 +84,10 @@ RUN git clone https://github.com/TheLukaDragar/decord.git /tmp/decord && \
     cd /tmp/decord && \
     mkdir -p build && \
     cd build && \
-    cmake .. -DUSE_CUDA=0 -DCMAKE_BUILD_TYPE=Release  && \
+    cmake .. -DUSE_CUDA=0 -DCMAKE_BUILD_TYPE=Release -DFFMPEG_DIR=/usr && \
     make -j$(nproc) && \
     cd ../python && \
     uv pip install .
-    
 
 # Copy code and requirements
 COPY . /1mdfFinal/
