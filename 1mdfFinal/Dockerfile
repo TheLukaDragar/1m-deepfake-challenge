@@ -16,26 +16,39 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/*
 
 # Download and compile FFmpeg 7.1.1 from source
+# Install basic build dependencies
+RUN apt-get install -y \
+    build-essential \
+    cmake \
+    git \
+    pkg-config \
+    wget \
+    xz-utils \
+    nasm \
+    yasm \
+    python3-dev \
+    python3-setuptools \
+    && rm -rf /var/lib/apt/lists/*
+
+# Build FFmpeg from source (version 7.1 - latest stable with full PCM support)
 RUN cd /tmp && \
-    wget https://ffmpeg.org/releases/ffmpeg-7.1.1.tar.xz && \
-    tar xf ffmpeg-7.1.1.tar.xz && \
-    cd ffmpeg-7.1.1 && \
+    wget https://ffmpeg.org/releases/ffmpeg-7.1.tar.xz && \
+    tar xf ffmpeg-7.1.tar.xz && \
+    cd ffmpeg-7.1 && \
     ./configure \
-    --prefix=/usr \
-    --extra-version=0ubuntu0.1 \
-    --toolchain=hardened \
-    --libdir=/usr/lib/x86_64-linux-gnu \
-    --incdir=/usr/include/x86_64-linux-gnu \
-    --arch=amd64 \
-    --enable-gpl \
-    --disable-stripping \
-    --enable-shared \
-    --disable-static \
-    && \
+        --prefix=/usr/local \
+        --enable-shared \
+        --enable-gpl \
+        --enable-version3 \
+        --enable-nonfree \
+        --disable-static \
+        --disable-debug \
+        --disable-doc \
+        --disable-programs && \
     make -j$(nproc) && \
     make install && \
-    cd /tmp && \
-    rm -rf ffmpeg-7.1.1*
+    ldconfig && \
+    cd / && rm -rf /tmp/ffmpeg-7.1*
 
 # Download and install the latest static ffmpeg for runtime
 RUN cd /tmp && \
@@ -46,12 +59,13 @@ RUN cd /tmp && \
     rm -rf /tmp/ffmpeg-* && \
     chmod +x /usr/local/bin/ffmpeg /usr/local/bin/ffprobe
 
-# Update library cache
-RUN ldconfig
+# Verify FFmpeg development libraries are properly installed
+RUN pkg-config --exists libavcodec libavformat libavutil && \
+    echo "✓ FFmpeg development libraries found" || \
+    (echo "✗ FFmpeg development libraries missing" && exit 1)
 
-# Verify FFmpeg version and libraries
-RUN ffmpeg -version | head -n 1 && \
-    pkg-config --modversion libavcodec libavformat libavutil
+# Show what FFmpeg version we're building against (should be 7.1)
+RUN pkg-config --modversion libavcodec libavformat libavutil | head -3
 
 # Install uv and set up virtual environment
 RUN pip install --upgrade pip && pip install uv
@@ -65,7 +79,7 @@ RUN git clone https://github.com/TheLukaDragar/decord.git /tmp/decord && \
     cd /tmp/decord && \
     mkdir -p build && \
     cd build && \
-    cmake .. -DUSE_CUDA=0 -DCMAKE_BUILD_TYPE=Release && \
+    cmake .. -DUSE_CUDA=0 -DCMAKE_BUILD_TYPE=Release -DFFMPEG_ROOT=/usr/local && \
     make -j$(nproc) && \
     cd ../python && \
     uv pip install .
