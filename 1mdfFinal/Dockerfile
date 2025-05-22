@@ -1,9 +1,13 @@
-FROM pytorch/pytorch:2.1.0-cuda12.1-cudnn8-runtime
+# Use the latest official PyTorch image with CUDA (as of 25.03, Ubuntu 24.04, Python 3.12, CUDA 12.8)
+FROM pytorch/pytorch:2.7.0-cuda12.6-cudnn9-devel
 
-VOLUME [ "/1mdfFinal/dataset", "/1mdfFinal/visual/models_luka_1mdf" ]
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
 
+RUN apt-get update && \
+    apt-get remove -y ffmpeg || true
 
-#get newest version of ffmpeg
+# Download and install the latest static ffmpeg
 RUN apt-get update && \
     apt-get install -y wget xz-utils && \
     cd /tmp && \
@@ -16,22 +20,18 @@ RUN apt-get update && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy the environment file to the Docker image
-COPY . /1mdfFinal/
+# (Optional) Verify ffmpeg version
+RUN ffmpeg -version
 
-# Set the working directory
+# Install uv (modern Python package manager)
+RUN pip install --upgrade pip && pip install uv
+
+# Copy code and requirements
+COPY . /1mdfFinal/
 WORKDIR /1mdfFinal
 
+# Install Python dependencies with uv
+RUN uv pip install -r /1mdfFinal/requirements.txt
 
-RUN pip config set global.timeout 120
-RUN pip config set global.retries 10
-
-
-# Create and activate the Conda environment
-RUN conda env create -f /1mdfFinal/environment.yml
-
-# Make RUN commands use the new environment:
-    # source /opt/conda/bin/activate pytorch_env_1mdf
-SHELL ["conda", "run", "-n", "pytorch_env_1mdf", "/bin/bash", "-c"]
-# Ensure the environment is activated when the container starts
+# Entrypoint
 CMD ["bash"]
