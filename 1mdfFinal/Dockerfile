@@ -19,7 +19,6 @@ RUN apt-get install -y \
     wget \
     python3-dev \
     python3-setuptools \
-    pkgconf \
     && rm -rf /var/lib/apt/lists/*
 
 # Create directory for FFmpeg packages
@@ -51,6 +50,9 @@ RUN cd /tmp/ffmpeg_packages && \
 
 # Update library cache
 RUN ldconfig
+
+# Set PKG_CONFIG_PATH environment variable
+ENV PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig
 
 # Verify FFmpeg installation and version
 RUN pkg-config --modversion libavcodec libavformat libavutil
