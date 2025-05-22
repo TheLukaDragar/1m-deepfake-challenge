@@ -6,7 +6,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Download and compile FFmpeg 7.1.1 from source
 # Install basic build dependencies
-RUN apt-get install -y \
+RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
     git \
