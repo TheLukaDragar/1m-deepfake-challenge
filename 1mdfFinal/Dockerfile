@@ -4,17 +4,6 @@ FROM pytorch/pytorch:2.7.0-cuda12.6-cudnn9-devel
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install basic build dependencies first
-RUN apt-get update && \
-    apt-get install -y \
-    build-essential \
-    cmake \
-    git \
-    wget \
-    python3-dev \
-    python3-setuptools \
-    && rm -rf /var/lib/apt/lists/*
-
 # Download and compile FFmpeg 7.1.1 from source
 # Install basic build dependencies
 RUN apt-get install -y \
