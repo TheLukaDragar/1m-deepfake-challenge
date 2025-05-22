@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y \
     yasm \
     python3-dev \
     python3-setuptools \
+    libgl1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Build FFmpeg from source (version 7.1 - latest stable with full PCM support)
