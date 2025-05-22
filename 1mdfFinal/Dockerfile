@@ -46,7 +46,7 @@ RUN cd /tmp && \
     rm -rf /tmp/*.deb
 
 # Set PKG_CONFIG_PATH to include FFmpeg .pc files
-ENV PKG_CONFIG_PATH="/usr/lib/x86_64-linux-gnu/pkgconfig:/usr/lib/pkgconfig:${PKG_CONFIG_PATH}"
+ENV PKG_CONFIG_PATH="/usr/lib/x86_64-linux-gnu/pkgconfig:/usr/lib/pkgconfig"
 
 # Update library cache
 RUN ldconfig
@@ -82,7 +82,7 @@ RUN git clone https://github.com/TheLukaDragar/decord.git /tmp/decord && \
     cd /tmp/decord && \
     mkdir -p build && \
     cd build && \
-    cmake .. -DUSE_CUDA=0 -DCMAKE_BUILD_TYPE=Release && \
+    cmake .. -DUSE_CUDA=0 -DCMAKE_BUILD_TYPE=Release  && \
     make -j$(nproc) && \
     cd ../python && \
     uv pip install .
