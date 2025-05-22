@@ -31,7 +31,7 @@ COPY . /1mdfFinal/
 WORKDIR /1mdfFinal
 
 # Install Python dependencies with uv
-RUN uv pip install -r /1mdfFinal/requirements.txt
+RUN uv pip install -r requirements.txt
 
 # Entrypoint
 CMD ["bash"]

@@ -1,0 +1,26 @@
+# requirements.txt generated from environment.yml for uv
+# Remove conda-specific packages and keep only pip-installable dependencies
+# If a package is not available on PyPI, comment it out or replace as needed
+
+# From pip section
+
+decord
+lightning
+huggingface-hub
+imageio
+pandas
+plotly
+scipy
+librosa
+opencv-python-headless
+wandb
+nbformat
+transformers
+avdeepfake1m
+
+# From top-level (PyPI-available only)
+asttokens
+ipykernel
+ipython
+jedi
+jupyter_core 
