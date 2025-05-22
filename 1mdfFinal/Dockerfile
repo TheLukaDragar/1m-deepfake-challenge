@@ -4,8 +4,53 @@ FROM pytorch/pytorch:2.7.0-cuda12.6-cudnn9-devel
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && \
-    apt-get remove -y ffmpeg || true
+
+# Update package lists
+RUN apt-get update
+
+# Remove any existing ffmpeg
+RUN apt-get remove -y ffmpeg libavcodec* libavformat* libavutil* || true
+
+# Install basic build dependencies
+RUN apt-get install -y \
+    build-essential \
+    cmake \
+    git \
+    pkg-config \
+    wget \
+    python3-dev \
+    python3-setuptools \
+    && rm -rf /var/lib/apt/lists/*
+
+# Download and install FFmpeg 7.1.1 prebuilt packages from Ubuntu 24.04
+RUN cd /tmp && \
+    # Download the main FFmpeg 7.1.1 library packages
+    wget http://archive.ubuntu.com/ubuntu/pool/universe/f/ffmpeg/libavutil59_7.1.1-1ubuntu1_amd64.deb && \
+    wget http://archive.ubuntu.com/ubuntu/pool/universe/f/ffmpeg/libavcodec61_7.1.1-1ubuntu1_amd64.deb && \
+    wget http://archive.ubuntu.com/ubuntu/pool/universe/f/ffmpeg/libavformat61_7.1.1-1ubuntu1_amd64.deb && \
+    wget http://archive.ubuntu.com/ubuntu/pool/universe/f/ffmpeg/libavfilter10_7.1.1-1ubuntu1_amd64.deb && \
+    wget http://archive.ubuntu.com/ubuntu/pool/universe/f/ffmpeg/libswresample5_7.1.1-1ubuntu1_amd64.deb && \
+    wget http://archive.ubuntu.com/ubuntu/pool/universe/f/ffmpeg/libswscale8_7.1.1-1ubuntu1_amd64.deb && \
+    wget http://archive.ubuntu.com/ubuntu/pool/universe/f/ffmpeg/libpostproc58_7.1.1-1ubuntu1_amd64.deb && \
+    # Download development packages
+    wget http://archive.ubuntu.com/ubuntu/pool/universe/f/ffmpeg/libavutil-dev_7.1.1-1ubuntu1_amd64.deb && \
+    wget http://archive.ubuntu.com/ubuntu/pool/universe/f/ffmpeg/libavcodec-dev_7.1.1-1ubuntu1_amd64.deb && \
+    wget http://archive.ubuntu.com/ubuntu/pool/universe/f/ffmpeg/libavformat-dev_7.1.1-1ubuntu1_amd64.deb && \
+    wget http://archive.ubuntu.com/ubuntu/pool/universe/f/ffmpeg/libavfilter-dev_7.1.1-1ubuntu1_amd64.deb && \
+    wget http://archive.ubuntu.com/ubuntu/pool/universe/f/ffmpeg/libswresample-dev_7.1.1-1ubuntu1_amd64.deb && \
+    wget http://archive.ubuntu.com/ubuntu/pool/universe/f/ffmpeg/libswscale-dev_7.1.1-1ubuntu1_amd64.deb && \
+    wget http://archive.ubuntu.com/ubuntu/pool/universe/f/ffmpeg/libpostproc-dev_7.1.1-1ubuntu1_amd64.deb && \
+    # Install all packages
+    dpkg -i *.deb || apt-get install -f -y && \
+    # Clean up
+    rm -rf /tmp/*.deb
+
+# Update library cache
+RUN ldconfig
+
+# Show what FFmpeg version we're building against (should be 7.1)
+RUN pkg-config --modversion libavcodec libavformat libavutil | head -3
+
 
 # Download and install the latest static ffmpeg
 RUN apt-get update && \
@@ -16,26 +61,35 @@ RUN apt-get update && \
     cp ffmpeg-*-static/ffmpeg /usr/local/bin/ && \
     cp ffmpeg-*-static/ffprobe /usr/local/bin/ && \
     rm -rf /tmp/ffmpeg-* && \
-    apt-get remove -y wget xz-utils && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/*
 
 # (Optional) Verify ffmpeg version
 RUN ffmpeg -version
 
-# Install uv (modern Python package manager)
+# Install uv and set up virtual environment
 RUN pip install --upgrade pip && pip install uv
-
-# Copy code and requirements
-COPY . /1mdfFinal/
-WORKDIR /1mdfFinal
-
 ENV UV_PYTHON_INSTALL_DIR=/opt/uv-home
 RUN uv venv /opt/venv --python 3.12
 ENV VIRTUAL_ENV=/opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Install Python dependencies with uv
+# Clone and build Decord with FFmpeg 7.x fixes
+RUN git clone https://github.com/TheLukaDragar/decord.git /tmp/decord && \
+    cd /tmp/decord && \
+    mkdir -p build && \
+    cd build && \
+    cmake .. -DUSE_CUDA=0 -DCMAKE_BUILD_TYPE=Release && \
+    make -j$(nproc) && \
+    cd ../python && \
+    uv pip install .
+    
+
+# Copy code and requirements
+COPY . /1mdfFinal/
+WORKDIR /1mdfFinal
+
+# Install remaining Python dependencies with uv
 RUN uv pip install -r requirements.txt
 
 # Entrypoint
