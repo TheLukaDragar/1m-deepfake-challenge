@@ -30,6 +30,11 @@ RUN pip install --upgrade pip && pip install uv
 COPY . /1mdfFinal/
 WORKDIR /1mdfFinal
 
+RUN uv venv .venv --python 3.12
+
+ENV VIRTUAL_ENV=/1mdfFinal/.venv
+ENV PATH="/1mdfFinal/.venv/bin:$PATH"
+
 # Install Python dependencies with uv
 RUN uv pip install -r requirements.txt
 
