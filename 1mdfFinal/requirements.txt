@@ -4,7 +4,6 @@
 
 # From pip section
 
-decord
 lightning
 huggingface-hub
 imageio
