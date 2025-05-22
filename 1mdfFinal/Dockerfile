@@ -66,6 +66,8 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Clone and build Decord with FFmpeg 7.x fixes
 RUN git clone https://github.com/TheLukaDragar/decord.git /tmp/decord && \
     cd /tmp/decord && \
+    git submodule init && \
+    git submodule update --recursive && \
     mkdir -p build && \
     cd build && \
     cmake .. -DUSE_CUDA=0 -DCMAKE_BUILD_TYPE=Release -DFFMPEG_ROOT=/usr/local && \
