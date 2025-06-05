@@ -23,3 +23,9 @@ ipykernel
 ipython
 jedi
 jupyter_core 
+
+pyarrow
+fastparquet
+polars
+seaborn
+matplotlib
