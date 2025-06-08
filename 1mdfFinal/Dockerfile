@@ -83,5 +83,10 @@ WORKDIR /1mdfFinal
 # Install remaining Python dependencies with uv
 RUN uv pip install -r requirements.txt
 
+# Install mamba_ssm
+RUN uv pip install packaging ninja
+RUN uv pip install git+https://github.com/Dao-AILab/causal-conv1d.git --no-build-isolation
+RUN uv pip install git+https://github.com/state-spaces/mamba.git --no-build-isolation
+
 # Entrypoint
 CMD ["bash"]
