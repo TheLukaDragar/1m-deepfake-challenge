@@ -83,10 +83,22 @@ WORKDIR /1mdfFinal
 # Install remaining Python dependencies with uv
 RUN uv pip install -r requirements.txt
 
-# Install mamba_ssm
+# Install mamba_ssm using pre-compiled wheels
 RUN uv pip install packaging ninja
-RUN uv pip install git+https://github.com/Dao-AILab/causal-conv1d.git --no-build-isolation
-RUN uv pip install git+https://github.com/state-spaces/mamba.git --no-build-isolation
+
+# RUN uv pip install git+https://github.com/Dao-AILab/causal-conv1d.git --no-build-isolation
+# RUN uv pip install git+https://github.com/state-spaces/mamba.git --no-build-isolation
+# Download pre-compiled wheels from Hugging Face Hub
+RUN cd /tmp && \
+    wget https://huggingface.co/theluka2/mamba-wheels/resolve/main/causal_conv1d-1.5.0.post8-cp312-cp312-linux_x86_64.whl && \
+    wget https://huggingface.co/theluka2/mamba-wheels/resolve/main/mamba_ssm-2.2.4-cp312-cp312-linux_x86_64.whl
+
+# Install from downloaded wheels (no compilation needed)
+RUN uv pip install /tmp/causal_conv1d-1.5.0.post8-cp312-cp312-linux_x86_64.whl
+RUN uv pip install /tmp/mamba_ssm-2.2.4-cp312-cp312-linux_x86_64.whl
+
+# Clean up wheel files
+RUN rm /tmp/*.whl
 
 # Entrypoint
 CMD ["bash"]
