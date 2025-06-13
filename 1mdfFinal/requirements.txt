@@ -29,3 +29,5 @@ fastparquet
 polars
 seaborn
 matplotlib
+
+segmentation-models-pytorch
